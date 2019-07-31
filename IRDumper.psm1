@@ -173,3 +173,7 @@ function Global:Main {
     Get-NetworkInfo
     Get-TCPconnections
 }
+
+function main {
+    Write-Output "This came from the main function...nothing to see here."
+}
