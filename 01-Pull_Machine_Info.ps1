@@ -18,9 +18,8 @@ that can be written to.
 
 # global variables
 $currentPath = (Split-Path $MyInvocation.MyCommand.Path)
-
 # make sure we have a trailing "\"
-If ($currentPath[-1] -notmatch "\\")
+If ($currentPath[-1] -notmatch "\\") 
 {
     $currentPath+="\"
 }

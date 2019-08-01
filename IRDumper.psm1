@@ -39,14 +39,20 @@ Data Gathering:
 
 # global variables
 $modulePath = (Split-Path $MyInvocation.MyCommand.Path)
+# make sure we have a trailing "\"
+If ($modulePath[-1] -notmatch "\\") 
+{
+    $modulePath+="\"
+}
+
 $datetimeString = (Get-Date -format o | ForEach-Object { $_ -replace ":", "." })
 $dumpFileName = $modulePath + $datetimeString + "--" + $env:COMPUTERNAME
 
-function Global:Get-StartOutput {
+function Get-StartOutput {
     Write-Output "///BEGINING OF OUTPUT///`n`n"| out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-MemoryDump {
+function Get-MemoryDump {
     Write-Output "pulling memory dump..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Memory Dump") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -54,7 +60,7 @@ function Global:Get-MemoryDump {
     Write-Output "TODO: implement this code" | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-SystemServices {
+function Get-SystemServices {
     Write-Output "pulling system services..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   System Services") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -62,7 +68,7 @@ function Global:Get-SystemServices {
     Write-Output "TODO: implement this code" | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-ScheduledTasks {
+function Get-ScheduledTasks {
     Write-Output "pulling scheduled tasks..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Scheduled Tasks") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -70,7 +76,7 @@ function Global:Get-ScheduledTasks {
     Write-Output "TODO: implement this code" | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-ComputerInfo {
+function Get-ComputerInfo {
     Write-Output "pulling computer info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Computer Information") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -80,7 +86,7 @@ function Global:Get-ComputerInfo {
     TotalPhysicalMemory,SystemType,PrimaryOwnerName,UserName) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-BIOSinfo {
+function Get-BIOSinfo {
     Write-Output "pulling bios info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   BIOS Information") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -89,7 +95,7 @@ function Global:Get-BIOSinfo {
     select-object Name,Version,SMBIOSBIOSVersion) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-CPUinfo {
+function Get-CPUinfo {
     Write-Output "pulling CPU info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   CPU Information") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -98,7 +104,7 @@ function Global:Get-CPUinfo {
     select-object Manufacturer,Name,CurrentClockSpeed,L2CacheSize) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-OSinfo {
+function Get-OSinfo {
     Write-Output "pulling OS info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Operating System Information") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -107,7 +113,7 @@ function Global:Get-OSinfo {
     select-object Caption,BuildNumber,Version,SerialNumber,ServicePackMajorVersion,InstallDate) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-AdminAccounts {
+function Get-AdminAccounts {
     Write-Output "pulling administrator info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Name of Built-In Administrator Accounts") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -116,7 +122,7 @@ function Global:Get-AdminAccounts {
     select-object Name) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-LAPSinfo {
+function Get-LAPSinfo {
     Write-Output "pulling LAPS info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   LAPS Information (if available, may be able to pair") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -127,7 +133,7 @@ function Global:Get-LAPSinfo {
     @{Label="Password";Expression={$_.'ms-Mcs-AdmPwd'}}) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-HotfixInfo {
+function Get-HotfixInfo {
     Write-Output "pulling hotfix info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Installed Hotfixes") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -136,7 +142,7 @@ function Global:Get-HotfixInfo {
     select-object HotFixID) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-ADinfo {
+function Get-ADinfo {
     Write-Output "pulling AD info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Active Directory Information") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -144,7 +150,7 @@ function Global:Get-ADinfo {
     Write-Output (get-adcomputer -Identity $env:COMPUTERNAME -Properties *) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-NetworkInfo {
+function Get-NetworkInfo {
     Write-Output "pulling network info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   Network Information") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -152,7 +158,7 @@ function Global:Get-NetworkInfo {
     Write-Output (Get-NetAdapter) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-TCPconnections {
+function Get-TCPconnections {
     Write-Output "pulling connection info..."
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
     Write-Output ("   TCP Connection Information") | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
@@ -160,7 +166,7 @@ function Global:Get-TCPconnections {
     Write-Output (Get-NetTCPConnection) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Get-EndOutput {
+function Get-EndOutput {
     Write-Output "///END OF OUTPUT///"| out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 
     Write-Output "...data pull complete.`n"
@@ -168,7 +174,7 @@ function Global:Get-EndOutput {
     Write-Output "file located at: " ($dumpFileName + ".txt")
 }
 
-function Global:GetThemAll {
+function GetThemAll {
     
     # get output and start file
     Get-StartOutput
