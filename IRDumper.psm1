@@ -3,6 +3,18 @@ NAME: IRDumper.psm1
 VERSION: v1.0
 AUTHOR: Jimmi Aylesworth
 DATE: 20190731
+LEGAL: Public domain, no rights reserved.
+
+*** a GREAT deal of this code was taken from below ***
+##############################################################################
+#  Script: Show-ComputerInfo.ps1
+#    Date: 30.May.2007
+# Version: 1.0
+#  Author: Jason Fossen, Enclave Consulting LLC (http://www.sans.org/sec505)
+#    SANS: Course SEC505 - Securing Windows and PowerShell Automation
+# Purpose: Demo a sampling of the kinds of information queryable through WMI.
+#   Legal: Public domain, no rights reserved.
+##############################################################################
 
 DESCRIPTION:
 This script will attempt to pull as much data as possible from a computer and store it
@@ -25,7 +37,7 @@ Data Gathering:
  
 #>
 
-#global variables
+# global variables
 $modulePath = (Split-Path $MyInvocation.MyCommand.Path)
 $datetimeString = (Get-Date -format o | ForEach-Object { $_ -replace ":", "." })
 $dumpFileName = $modulePath + $datetimeString + "--" + $env:COMPUTERNAME
@@ -157,11 +169,16 @@ function Global:Get-EndOutput {
 }
 
 function Global:GetThemAll {
+    
+    # get output and start file
     Get-StartOutput
-    Get-EndOutput
-    Get-MemoryDump
-    Get-SystemServices
-    Get-ScheduledTasks
+
+    # not yet implemented items
+    #Get-MemoryDump
+    #Get-SystemServices
+    #Get-ScheduledTasks
+    
+    # implemented items
     Get-ComputerInfo
     Get-BIOSinfo
     Get-CPUinfo
@@ -172,6 +189,9 @@ function Global:GetThemAll {
     Get-ADinfo
     Get-NetworkInfo
     Get-TCPconnections
+    
+    # wrap up output and let user know location
+    Get-EndOutput
 }
 
 function main {

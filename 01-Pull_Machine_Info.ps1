@@ -3,6 +3,7 @@ NAME: 01-Pull_Machine_Info.ps1
 VERSION: v1.0
 AUTHOR: Jimmi Aylesworth
 DATE: 20190731
+LEGAL: Public domain, no rights reserved.
 
 DESCRIPTION:
 This script calls the IR-Dumper module and will be used to call
@@ -15,10 +16,10 @@ that can be written to.
 
 #>
 
-#global variables
+# global variables
 $currentPath = (Split-Path $MyInvocation.MyCommand.Path)
 
-#make sure we have a trailing "\"
+# make sure we have a trailing "\"
 If ($currentPath[-1] -notmatch "\\")
 {
     $currentPath+="\"
@@ -26,10 +27,10 @@ If ($currentPath[-1] -notmatch "\\")
 
 $scriptPath = $currentPath + "IRDumper.psm1"
 
-#import module and suppress warnings
+# import module and suppress warnings
 Import-Module -Name $scriptPath 3>$null
 
-#list out the available commands
-Get-Command -Module IRDumper
+# list out the available commands
+#Get-Command -Module IRDumper
 
 GetThemAll
