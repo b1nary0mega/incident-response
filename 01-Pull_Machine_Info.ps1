@@ -23,4 +23,4 @@ $scriptPath = $currentPath + "IRDumper.psm1"
 Import-Module -Name $scriptPath 3>$null
 Get-Command -Module IRDumper
 
-GetEmAll
+GetThemAll

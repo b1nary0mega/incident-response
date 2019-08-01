@@ -156,7 +156,7 @@ function Get-TCPconnections {
     Write-Output (Get-NetTCPConnection) | out-file -Append -encoding ASCII -filepath ($dumpFileName + ".txt")
 }
 
-function Global:Main {
+function Global:GetThemAll {
     Get-StartOutput
     Get-EndOutput
     Get-MemoryDump
