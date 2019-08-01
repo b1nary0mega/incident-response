@@ -24,10 +24,10 @@ If ($currentPath[-1] -notmatch "\\")
     $currentPath+="\"
 }
 
-$scriptPath = $currentPath + "IRDumper.psm1"
+$IRDumperPath = $currentPath + "IRDumper.psm1"
 
 # import module and suppress warnings
-Import-Module -Name $scriptPath 3>$null
+Import-Module -Name $IRDumperPath 3>$null
 
 # list out the available commands
 #Get-Command -Module IRDumper
