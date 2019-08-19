@@ -23,8 +23,8 @@ into a local (same directory as script) text file.
 Data Gathering:
 [ ] Memory Dump
 [ ] Scheduled Tasks
-[ ] System Services
-[x] General Computer Information (Name, Domain, Make, Model, etc.)
+[X] System Services
+[X] General Computer Information (Name, Domain, Make, Model, etc.)
 [X] Process Tree
 [X] BIOS
 [X] CPU Make
@@ -67,7 +67,10 @@ function Get-SystemServices {
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output ("   System Services") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
-    Write-Output "TODO: implement this code" | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output "...Running Services..." | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output (Get-Service | Where {$_.Status -eq "Running"}) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output "...Stopped Services..." | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output (Get-Service | Where {$_.Status -eq "Stopped"}) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
 }
 
 # SOURCE: Adam Roben @ https://gist.github.com/aroben/5542538
@@ -242,15 +245,15 @@ function GetThemAll {
 
     ## not yet implemented items
     #Get-MemoryDump
-    #Get-SystemServices
     #Get-ScheduledTasks
     
     ## implemented items
     Get-ComputerInfo
-    Get-ProcessTree
     Get-BIOSinfo
     Get-CPUinfo
     Get-OSinfo
+    Get-ProcessTree
+    Get-SystemServices
     Get-AdminAccounts
     Get-LAPSinfo
     Get-HotfixInfo
