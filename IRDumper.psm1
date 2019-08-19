@@ -68,9 +68,9 @@ function Get-SystemServices {
     Write-Output ("   System Services") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output "...Running Services..." | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
-    Write-Output (Get-Service | Where {$_.Status -eq "Running"}) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output (Get-Service | Where {$_.Status -eq "Running"} | Select-Object *) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output "...Stopped Services..." | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
-    Write-Output (Get-Service | Where {$_.Status -eq "Stopped"}) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output (Get-Service | Where {$_.Status -eq "Stopped"} | Select-Object *) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
 }
 
 # SOURCE: Adam Roben @ https://gist.github.com/aroben/5542538
