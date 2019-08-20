@@ -23,6 +23,7 @@ into a local (same directory as script) text file.
 Data Gathering:
 [ ] Memory Dump
 [ ] Scheduled Tasks
+[X] Logged on user
 [X] System Services
 [X] General Computer Information (Name, Domain, Make, Model, etc.)
 [X] Process Tree
@@ -60,6 +61,14 @@ function Get-MemoryDump {
     Write-Output ("   Memory Dump") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output "TODO: implement this code" | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+}
+
+function Get-LoggedOnUser {
+    Write-host "...pulling logged on user..." -foregroundcolor green 
+    Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output ("   Logged On User") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output (Get-CimInstance win32_LoggedOnUser | Select @{ expression={$_.Antecedent.Domain + "\" + $_.Antecedent.Name}; label='Account'})  | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
 }
 
 function Get-SystemServices {
@@ -252,6 +261,7 @@ function GetThemAll {
     Get-BIOSinfo
     Get-CPUinfo
     Get-OSinfo
+    Get-LoggedOnUser
     Get-ProcessTree
     Get-SystemServices
     Get-AdminAccounts
