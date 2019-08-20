@@ -242,7 +242,7 @@ function Get-TCPconnections {
 
 function Get-EndOutput {
     Write-Output "///END OF OUTPUT///"| out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
-    Write-host "...aggregate data pull complete." -foregroundcolor green
+    Write-host "...aggregate data pull complete." -foregroundcolor cyan
 }
 
 function GetThemAll {
@@ -274,14 +274,23 @@ function GetThemAll {
     # wrap up output and let user know location
     Get-EndOutput
 
-    #copy journal events
-    Write-host "...pulling security event log..." -foregroundcolor green
-    wevtutil epl security ($dumpFileName + "-security.evtx")
+    #copy windows logs
+    Write-host "...pulling Security event log..." -foregroundcolor green
+    wevtutil epl Security ($dumpFileName + "-Security.evtx")
+    Write-host "...pulling Application event log..." -foregroundcolor green
+    wevtutil epl Application ($dumpFileName + "-Application.evtx")
+    Write-host "...pulling System event log..." -foregroundcolor green
+    wevtutil epl System ($dumpFileName + "-System.evtx")
+    Write-host "...pulling PowerShell event log..." -foregroundcolor green
+    wevtutil epl  Microsoft-Windows-PowerShell/Operational ($dumpFileName + "-PowerShell.evtx")
 
     #hash all the things
-    Write-host "...hashing aggregate and event files..." -foregroundcolor green
+    Write-host "...hashing aggregate and event files..." -foregroundcolor cyan
     get-filehash ($dumpFileName + "-aggregate.txt") | format-list | out-file -append ($dumpFileName + "--HASHES.txt")
-    get-filehash ($dumpFileName + "-security.evtx") | format-list | out-file -append ($dumpFileName + "--HASHES.txt")
+    get-filehash ($dumpFileName + "-Security.evtx") | format-list | out-file -append ($dumpFileName + "--HASHES.txt")
+    get-filehash ($dumpFileName + "-Application.evtx") | format-list | out-file -append ($dumpFileName + "--HASHES.txt")
+    get-filehash ($dumpFileName + "-System.evtx") | format-list | out-file -append ($dumpFileName + "--HASHES.txt")
+    get-filehash ($dumpFileName + "-PowerShell.evtx") | format-list | out-file -append ($dumpFileName + "--HASHES.txt")
 
     Write-host "...all files located at: `n`t" ($dumpFileName + "*") -foregroundcolor yellow 
 
