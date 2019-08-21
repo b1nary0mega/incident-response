@@ -193,7 +193,7 @@ function Get-AdminAccounts {
     Write-Output ("   Name of Built-In Administrator Accounts") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output (get-wmiobject -query "SELECT * FROM Win32_UserAccount" | where-object {$_.SID -match '-500$'} | 
-    select-object Name) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    select-object Caption) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
 }
 
 function Get-LAPSinfo {
