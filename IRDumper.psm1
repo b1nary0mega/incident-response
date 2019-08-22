@@ -24,6 +24,7 @@ Data Gathering:
 [ ] Memory Dump
 [ ] Scheduled Tasks
 [X] Logged on user
+[X] Administrator & Users Group Members
 [X] System Services
 [X] General Computer Information (Name, Domain, Make, Model, etc.)
 [X] Process Tree
@@ -52,7 +53,8 @@ $dumpFileName = $modulePath + $datetimeString + "--" + $env:COMPUTERNAME
 
 
 function Get-StartOutput {
-    Write-Output "///BEGINING OF OUTPUT///`n`n"| out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output "///BEGINING OF OUTPUT///`n`n" | `
+    out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
 }
 
 function Get-MemoryDump {
@@ -68,7 +70,74 @@ function Get-LoggedOnUser {
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output ("   Logged On User") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
     Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
-    Write-Output (Get-CimInstance win32_LoggedOnUser | Select @{ expression={$_.Antecedent.Domain + "\" + $_.Antecedent.Name}; label='Account'})  | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output (Get-CimInstance win32_LoggedOnUser | `
+        Select @{ expression={$_.Antecedent.Domain + "\" + $_.Antecedent.Name}; label='Account'}) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+}
+
+# SOURCE: Boe Prox @ https://mcpmag.com/articles/2015/06/18/reporting-on-local-groups.aspx
+function Get-LocalGroup {
+  [Cmdletbinding()] 
+
+  Param (
+    [Parameter(ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True)]
+    [String[]]$Computername =  $Env:COMPUTERNAME,
+    [parameter()]
+    [string[]]$Group
+  )
+
+  Begin {
+
+    Function  ConvertTo-SID {
+      Param([byte[]]$BinarySID)
+      (New-Object  System.Security.Principal.SecurityIdentifier($BinarySID,0)).Value
+    }
+  
+    Function  Get-LocalGroupMember {
+      Param  ($Group)
+      $group.Invoke('members')  | ForEach {
+        $_.GetType().InvokeMember("Name",  'GetProperty',  $null,  $_, $null)
+      }
+    }
+  }
+
+  Process  {
+
+    Write-host "...pulling Local Groups..." -foregroundcolor green 
+    Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output ("   Local Administrator and Users Group Members") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+    Write-Output ("----------------------------------------------------------") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+
+    ForEach  ($Computer in  $Computername) {
+      Try {
+        Write-Verbose  "Connecting to $($Computer)"
+        $adsi  = [ADSI]"WinNT://$Computer"
+
+        If  ($PSBoundParameters.ContainsKey('Group')) {
+          Write-Verbose  "Scanning for groups: $($Group -join ',')"
+          $Groups  = ForEach  ($item in  $group) {
+            $adsi.Children.Find($Item, 'Group')
+          }
+        } Else {
+          Write-Verbose  "Scanning all groups"
+          $groups  = $adsi.Children | where {$_.SchemaClassName -eq  'group'}
+        }
+
+        If  ($groups) {
+          $groups  | ForEach {
+            Write-Output ("Computer: " + `
+                $Computer + "`nName: " + $_.Name[0] + "`nMembers: " + `
+                ((Get-LocalGroupMember  -Group $_) -join ', ') + `
+                "`nSID: " + (ConvertTo-SID -BinarySID $_.ObjectSID[0])`
+                + "`n") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "-aggregate.txt")
+          }
+        } Else {
+          Throw  "No groups found!"
+        }
+      } Catch {
+        Write-Warning  "$($Computer): $_"
+      }
+    }
+  }
 }
 
 function Get-SystemServices {
@@ -258,17 +327,38 @@ function GetThemAll {
     
     ## implemented items
     Get-ComputerInfo
+    
     Get-BIOSinfo
+    
     Get-CPUinfo
+    
     Get-OSinfo
-    Get-LoggedOnUser
-    Get-ProcessTree
-    Get-SystemServices
-    Get-AdminAccounts
-    Get-LAPSinfo
+    
     Get-HotfixInfo
+    
+    Get-LoggedOnUser
+    
+    Get-LocalGroup -Computername  $env:COMPUTERNAME -Group  Administrators,  Users  | Format-List 
+    
+    Get-ProcessTree
+    
+    Get-SystemServices
+    
+    <# Turned off to save time
+     # Pulled in local Administrator Group members from "Get-LocalGroup"
+     # Does not account for Domain Administrators.
+    #>
+    #Get-AdminAccounts
+
+    <# Turned off as LAPS information is within ADinfo
+     # Turn back on to explicitly call out
+    #>
+    #Get-LAPSinfo
+    
     Get-ADinfo
+    
     Get-NetworkInfo
+    
     Get-TCPconnections
 
     # wrap up output and let user know location
@@ -277,10 +367,13 @@ function GetThemAll {
     #copy windows logs
     Write-host "...pulling Security event log..." -foregroundcolor green
     wevtutil epl Security ($dumpFileName + "-Security.evtx")
+    
     Write-host "...pulling Application event log..." -foregroundcolor green
     wevtutil epl Application ($dumpFileName + "-Application.evtx")
+    
     Write-host "...pulling System event log..." -foregroundcolor green
     wevtutil epl System ($dumpFileName + "-System.evtx")
+    
     Write-host "...pulling PowerShell event log..." -foregroundcolor green
     wevtutil epl  Microsoft-Windows-PowerShell/Operational ($dumpFileName + "-PowerShell.evtx")
 
