@@ -1,5 +1,5 @@
 <#
-NAME: Get_Stuff-prototype.ps1
+NAME: JCERT.ps1
 VERSION: v1.0
 AUTHOR: Jimmi Aylesworth
 DATE: 20190823
@@ -67,7 +67,7 @@ function hiveCopy {
     $Hives = "SYSTEM","SOFTWARE","SAM"
     Write-host "...pulling registry hive(s)..." -foregroundcolor green 
     forEach ($hive in $Hives){
-        Write-host "... ... " + $hive " ... ..." -foregroundcolor blue 
+        Write-host "... ... " $hive "... ..." -foregroundcolor blue 
         reg save HKLM\SYSTEM ($dumpFileName + "\hives\" + $env:ComputerName + "-" + $hive)
         $fileNames.Add($dumpFileName + "\hives\" + $env:ComputerName + "-" + $hive)
     }
@@ -132,6 +132,71 @@ function processTreeExport {
     }
 }
 
+# SOURCE: Boe Prox @ https://mcpmag.com/articles/2015/06/18/reporting-on-local-groups.aspx
+function GroupQuery {
+  [Cmdletbinding()] 
+
+  Param (
+    [Parameter(ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True)]
+    [String[]]$Computername =  $Env:COMPUTERNAME,
+    [parameter()]
+    [string[]]$Group
+  )
+
+  Begin {
+
+    Function  ConvertTo-SID {
+      Param([byte[]]$BinarySID)
+      (New-Object  System.Security.Principal.SecurityIdentifier($BinarySID,0)).Value
+    }
+  
+    Function  Get-LocalGroupMember {
+      Param  ($Group)
+      $group.Invoke('members')  | ForEach {
+        $_.GetType().InvokeMember("Name",  'GetProperty',  $null,  $_, $null)
+      }
+    }
+  }
+
+  Process  {
+
+    Write-host "...pulling Local Groups..." -foregroundcolor green 
+
+    ForEach  ($Computer in  $Computername) {
+      Try {
+        Write-Verbose  "Connecting to $($Computer)"
+        $adsi  = [ADSI]"WinNT://$Computer"
+
+        If  ($PSBoundParameters.ContainsKey('Group')) {
+          Write-Verbose  "Scanning for groups: $($Group -join ',')"
+          $Groups  = ForEach  ($item in  $group) {
+            $adsi.Children.Find($Item, 'Group')
+          }
+        } Else {
+          Write-Verbose  "Scanning all groups"
+          $groups  = $adsi.Children | where {$_.SchemaClassName -eq  'group'}
+        }
+
+        If  ($groups) {
+          $groups  | ForEach {
+            Write-Output ("Computer: " + `
+                $Computer + "`nName: " + $_.Name[0] + "`nMembers: " + `
+                ((Get-LocalGroupMember  -Group $_) -join ', ') + `
+                "`nSID: " + (ConvertTo-SID -BinarySID $_.ObjectSID[0])`
+                + "`n") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-Groups.txt")
+          }
+          #add the filename to collection
+          $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-Groups.txt")
+        } Else {
+          Throw  "No groups found!"
+        }
+      } Catch {
+        Write-Warning  "$($Computer): $_"
+      }
+    }
+  }
+}
+
 # Hash all files
 function fileHasher {
     Write-host "...hashing all the things..." -foregroundcolor green 
@@ -141,29 +206,33 @@ function fileHasher {
 }
 
 <###########################################################
-
+                  Let's begin...shall we
 ###########################################################>
+
 Write-host "[+] Beginning Data Acquisition" -foregroundcolor green 
-$VICTIM = ${Env:ComputerName}
-$fileNames = New-Object System.Collections.Generic.List[string]
+$VICTIM = ${Env:ComputerName} #computername
 
-$datetimeString = (Get-Date -format o | ForEach-Object { $_ -replace ":", "." })
-#$dumpFileName = "\\fileserver1\isad\ISADdata\IS_Staff\CyberSecurity\Incoming\" + $datetimeString + "--" + $VICTIM
-$dumpFileName = ".\Incoming\" + $datetimeString + "--" + $VICTIM
+$fileNames = New-Object System.Collections.Generic.List[string] #collection to store files (full path)
 
-#make directories to store files
+$datetimeString = (Get-Date -format o | ForEach-Object { $_ -replace ":", "." }) #filename friendly DT string for labeling
+
+$dumpFileName = ".\" + $datetimeString + "--" + $VICTIM
+
+#make directories to store above mentioned files
 $destinations = "prefetch","hives","logs"
 Write-host "[-] Creating directory structure"
 forEach ($dest in $destinations) {
     New-Item -Path ($dumpFileName + "\" + $dest) -ItemType Directory
 }
 
+#all your datas belong to $dumpFileName ;)
 computerInfo
 logCopy
 prefetchCopy
 autorunsQuery
 hiveCopy
 ProcessTreeExport
+GroupQuery -Computername  $env:COMPUTERNAME -Group  Administrators,  Users  | Format-List 
 fileHasher
 
 Write-host "[+] Completed Data Acquisition" -foregroundcolor green 
