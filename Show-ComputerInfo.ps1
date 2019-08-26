@@ -43,3 +43,7 @@ select-object Caption,BuildNumber,Version,SerialNumber,ServicePackMajorVersion,I
 get-wmiobject -query "SELECT * FROM Win32_QuickFixEngineering" |
 select-object HotFixID
 
+"----------------------------------------------------------"
+"   Logged On User"
+"----------------------------------------------------------"
+Get-CimInstance win32_LoggedOnUser
