@@ -40,11 +40,18 @@ function computerInfo {
     $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-ComputerInfo.txt")
 }
 
+function clientDNSCache {
+  Write-Output (Get-DnsClientCache) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-DNSCache.txt")
+  Write-host "...pulling dns cache info..." -foregroundcolor green
+  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-DNSCache.txt")
+  
+}
+
 # Hash all files
 function fileHasher {
     Write-host "...hashing all the things..." -foregroundcolor green 
     ForEach ($file in $fileNames) {
-        get-filehash ($file) | format-list | out-file -append ($dumpFileName + "--HASHES.txt")
+        get-filehash ($file) | format-list | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-Hashes.txt")
     } 
 }
 
@@ -233,8 +240,10 @@ logCopy
 hiveCopy
 
 ### Collect network caches ###
+clientDNSCache
 
-### Collect Users ###
+### Collect Users ### 
+##--> NOTE:: Actively logged on users is under "computerInfo" <--##
 GroupQuery -Computername  $env:COMPUTERNAME -Group  Administrators,  Users  | Format-List 
 
 ### Analyze Startup Items ###
