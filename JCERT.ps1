@@ -207,7 +207,7 @@ function Get-ComputerShares {
 }
 
 function Get-ComputerDrives {
-    Write-host "...pulling computer shares..." -foregroundcolor green 
+    Write-host "...pulling computer drives..." -foregroundcolor green 
     Get-WMIObject -class Win32_LogicalDisk | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-ComputerDrives.txt")
     $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-ComputerDrives.txt")
 }
