@@ -212,6 +212,14 @@ function Get-ComputerDrives {
     $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-ComputerDrives.txt")
 }
 
+function Get-GPOPolicyReports {
+  Write-host "...pulling GPO policy reports..." -foregroundcolor green 
+  $GPOList = Get-GPO -all | Select-Object -Property DisplayName,Id
+  ForEach ($gpo in $GPOList) {
+      get-GPOReport -GUID $gpo.Id -ReportType Html -Path ($dumpFileName + "\GPO\" + $gpo.DisplayName + " (" + $gpo.Id + ").html") 2> $null 
+  }
+}
+
 function Get-LogCopy {
     $Logs = @{Security = "Security"; Application = "Application"; System = "System"; `
       Powershell = "Microsoft-Windows-PowerShell/Operational"; `
@@ -340,7 +348,7 @@ $datetimeString = (Get-Date -format o | ForEach-Object { $_ -replace ":", "." })
 $dumpFileName = ".\Incoming\" + $datetimeString + "--" + $VICTIM
 
 #make directories to store above mentioned files
-$destinations = "prefetch","hives","logs"
+$destinations = "prefetch","hives","logs","GPO"
 Write-host "[-] Creating directory structure"
 forEach ($dest in $destinations) {
     New-Item -Path ($dumpFileName + "\" + $dest) -ItemType Directory
@@ -387,13 +395,12 @@ Get-FirewallData
 ### Collect web files ###
 
 #all your datas belong to $dumpFileName ;)
+Get-GPOPolicyReports
 Get-ComputerShares
 Get-ComputerDrives
 Get-ComputerInfo
 
 ### Analyze all files ###
-
-
 
 #finish up by providing a hash for all pulled data and files
 Get-FileHasher
