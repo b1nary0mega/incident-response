@@ -194,7 +194,6 @@ function Get-HiveByUsers {
     #itterate through list, saving keys
     $RegistryUsers = Get-Content ($dumpFileName + "\hives\" + $env:ComputerName + "-HKU-list.txt")
     forEach ($RegistryUser in $RegistryUsers) {
-      if ($RegistryUser -eq "") {continue} #first line is blank; skip it
       reg save ("HKU\" + $RegistryUser) ($dumpFileName + "\hives\" + $env:ComputerName + "-" + $RegistryUser + "-NTHive")
       $fileNames.Add($dumpFileName + "\hives\" + $env:ComputerName + "-" + $RegistryUser + "-NTHive")
     }
@@ -218,6 +217,28 @@ function Get-GPOPolicyReports {
   ForEach ($gpo in $GPOList) {
       get-GPOReport -GUID $gpo.Id -ReportType Html -Path ($dumpFileName + "\GPO\" + $gpo.DisplayName + " (" + $gpo.Id + ").html") 2> $null 
   }
+}
+
+function Get-InstalledProgramDetails {
+    Write-host "...pulling installed programs..." -foregroundcolor green 
+    
+    #grab 32-bit installations
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "[32-bit] HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Get-ItemProperty "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" | Select-Object DisplayName, DisplayVersion, Publisher, InstallLocation, InstallDate | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    
+    #grab 64-bit installations
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "[64-bit] HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    Get-ItemProperty "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | Select-Object DisplayName, DisplayVersion, Publisher, InstallLocation, InstallDate | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
+    
+    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
 }
 
 function Get-LogCopy {
@@ -392,10 +413,13 @@ Get-Network_clientIPConfig
 Get-HostsCopy
 Get-FirewallData
 
-### Collect web files ###
+### Collect Installed Programs (and program details) ###
+Get-InstalledProgramDetails
+
+### Collect GPO Policies (will only work if account is associated with AD domain or forest; NOT local)
+Get-GPOPolicyReports
 
 #all your datas belong to $dumpFileName ;)
-Get-GPOPolicyReports
 Get-ComputerShares
 Get-ComputerDrives
 Get-ComputerInfo
