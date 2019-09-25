@@ -1,1 +1,1 @@
-powershell -ExecutionPolicy Bypass ".\JCERT.ps1"
+powershell -ExecutionPolicy Bypass ".\Modules\JCERT.ps1"

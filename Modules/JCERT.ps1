@@ -35,14 +35,14 @@ Data Gathering:
 
 #>
 function Get-AutorunsQuery {
-    Write-host "...pulling autorun info..." -foregroundcolor green 
-    .\autorunsc64.exe -accepteula -a * -c > ($dumpFileName + "\" + $env:ComputerName + "-autoruns.csv")
+    Write-host "...pulling autoruns..." -foregroundcolor green 
+    .\bin\autorunsc.exe -accepteula -a * -c >($dumpFileName + "\" + $env:ComputerName + "-autoruns.csv")
     $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-autoruns.csv")
 }
 
 function Get-ComputerInfo {
 # SOURCE: Jason Fossen @ http://www.sans.org/sec505
-  Write-Output (.\Show-ComputerInfo.ps1) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ComputerInfo.txt")
+  Write-Output (.\Modules\Show-ComputerInfo.ps1) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ComputerInfo.txt")
   Write-host "...pulling computer info..." -foregroundcolor green 
   $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-ComputerInfo.txt")
 }
@@ -90,7 +90,7 @@ function Get-FileHasher {
     } 
 }
 
-Function Get-FirewallData {
+function Get-FirewallData {
   Write-host "...pulling firewall configuration..." -foregroundcolor green 
   $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-FirewallConfig.txt")
   netsh advfirewall show allprofiles | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-FirewallConfig.txt")
@@ -376,58 +376,66 @@ forEach ($dest in $destinations) {
 }
 
 ### Enumerate Files ###
-Get-PrefetchCopy
-Get-HiveCopy
-Get-HiveByUsers
+Get-PrefetchCopy 2>$null
+Get-HiveCopy 2>$null
+Get-HiveByUsers 2>$null
 
 ### Collect network caches ###
-Get-Network_clientDNSCache
-Get-Network_clientARPTable
+Get-Network_clientDNSCache 2>$null
+Get-Network_clientARPTable 2>$null
 
 ### Collect User & Administrator Group Members ### 
-Get-GroupQuery -Computername  $env:COMPUTERNAME -Group  Administrators,  Users  | Format-List 
+Get-GroupQuery -Computername  $env:COMPUTERNAME -Group  Administrators,  Users   2>$null | Format-List 
 
 ### Analyze Startup Items ###
-Get-AutorunsQuery
+Get-AutorunsQuery 2>$null
 
 ### Analyze Programs Run ###
 ### Collect Network Shares ###
 
 ### Collect System Configuration ###
-Get-SystemServices
+Get-SystemServices 2>$null
 
 ### Analyze Scheduled tasks ###
-Get-ScheduledTasks
+Get-ScheduledTasks 2>$null
 
 ### Collect event logs ###
-Get-LogCopy
+Get-LogCopy 2>$null
 
 ### Collect Processes ###
-Get-Processes_PSTree
-Get-TaskLists
-Get-Processes_CPUMemUse
+Get-Processes_PSTree 2>$null
+Get-TaskLists 2>$null
+Get-Processes_CPUMemUse 2>$null
 
 ### Collect Network Connections and Ports ###
-Get-Network_clientConnections
-Get-Network_clientIPConfig
-Get-HostsCopy
-Get-FirewallData
+Get-Network_clientConnections 2>$null
+Get-Network_clientIPConfig 2>$null
+Get-HostsCopy 2>$null
+Get-FirewallData 2>$null
 
 ### Collect Installed Programs (and program details) ###
-Get-InstalledProgramDetails
+Get-InstalledProgramDetails 2>$null
 
 ### Collect GPO Policies (will only work if account is associated with AD domain or forest; NOT local)
-Get-GPOPolicyReports
+try {
+  Get-GPOPolicyReports 2>$null
+}
+catch {
+  Write-Output ("There was an error obtaining the GPO Reports.") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\GPO\" + $env:ComputerName +  "-GPOPolicyReports.txt")
+}
+
 
 #all your datas belong to $dumpFileName ;)
-Get-ComputerShares
-Get-ComputerDrives
-Get-ComputerInfo
+Get-ComputerShares 2>$null
+Get-ComputerDrives 2>$null
+Get-ComputerInfo 2>$null
 
 ### Analyze all files ###
 
 #finish up by providing a hash for all pulled data and files
-Get-FileHasher
+Get-FileHasher 2>$null
 
 #let the user know we are finished
-Write-host "[+] Completed Data Acquisition" -foregroundcolor green 
+Write-host "[+] Completed Data Acquisition`n" -foregroundcolor green 
+
+Write-host ("`tFiles saved to: " + $dumpFileName) -foregroundcolor yellow

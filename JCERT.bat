@@ -1,1 +1,0 @@
-powershell -ExecutionPolicy Bypass ".\JCERT.ps1"
