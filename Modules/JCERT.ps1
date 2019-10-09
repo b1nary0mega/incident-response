@@ -263,6 +263,35 @@ function Get-PrefetchCopy {
     #>
 }
 
+function Get-MemoryFiles {
+  #attempt pulling hibernation file
+  try {
+    Write-host "...pulling Hibernation file..." -foregroundcolor green 
+    Copy-Item $env:SystemDrive\hiberfil.sys ($dumpFileName + "\memory")
+  }
+  catch {
+    Write-Output ("`t-error copying the Hibernation file") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ERROR_LOG.txt")
+  }
+  
+  #attempt pulling the page file  
+  try {
+    Write-host "...pulling Page file..." -foregroundcolor green 
+    Copy-Item $env:SystemDrive\pagefile.sys ($dumpFileName + "\memory")
+  }
+  catch {
+    Write-Output ("`t-error copying the Page file") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ERROR_LOG.txt")
+  } 
+
+  #attempt pulling memory dump
+  try {
+    Write-host "...pulling Memory Dump file..." -foregroundcolor green 
+    Copy-Item $env:WINDIR\MEMORY.DMP ($dumpFileName + "\memory")
+  }
+  catch {
+    Write-Output ("`t-error copying the Memory Dump file") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ERROR_LOG.txt")
+  }   
+}
+
 function Get-Processes_PSTree {
 # SOURCE: Adam Roben @ https://gist.github.com/aroben/5542538
     Write-host "...pulling process tree..." -foregroundcolor green
@@ -369,28 +398,32 @@ $datetimeString = (Get-Date -format o | ForEach-Object { $_ -replace ":", "." })
 $dumpFileName = ".\Incoming\" + $datetimeString + "--" + $VICTIM
 
 #make directories to store above mentioned files
-$destinations = "prefetch","hives","logs","GPO"
+$destinations = "memory","prefetch","hives","logs","GPO"
 Write-host "[-] Creating directory structure"
 forEach ($dest in $destinations) {
     New-Item -Path ($dumpFileName + "\" + $dest) -ItemType Directory
 }
 
-### Enumerate Files ###
+### Memory Files ###
+Get-MemoryFiles 2>$null
 Get-PrefetchCopy 2>$null
+
+### Registry Files ###
 Get-HiveCopy 2>$null
 Get-HiveByUsers 2>$null
 
-### Collect network caches ###
+### Network caches ###
 Get-Network_clientDNSCache 2>$null
 Get-Network_clientARPTable 2>$null
 
-### Collect User & Administrator Group Members ### 
+### Group Members (Administrators & Users) ### 
 Get-GroupQuery -Computername  $env:COMPUTERNAME -Group  Administrators,  Users   2>$null | Format-List 
 
-### Analyze Startup Items ###
+### Startup Items ###
 Get-AutorunsQuery 2>$null
 
 ### Analyze Programs Run ###
+
 ### Collect Network Shares ###
 
 ### Collect System Configuration ###
