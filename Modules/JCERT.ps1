@@ -292,6 +292,18 @@ function Get-MemoryFiles {
   }   
 }
 
+function Get-MemoryDump {
+  #attempt to dump memory
+  try {
+    Write-host "...imaging Memory (winpmem)..." -foregroundcolor green 
+    .\bin\winpmem.exe -o ($dumpFileName + "\memory\" + $env:ComputerName + "-winpmem_image.aff4") -dd
+    $fileNames.Add($dumpFileName + "\memory\" + $env:ComputerName + "-winpmem_image.aff4")
+  }
+  catch {
+    Write-Output ("`t-error imaging Memory (winpmem") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ERROR_LOG.txt")
+  }
+}
+
 function Get-Processes_PSTree {
 # SOURCE: Adam Roben @ https://gist.github.com/aroben/5542538
     Write-host "...pulling process tree..." -foregroundcolor green
@@ -405,7 +417,8 @@ forEach ($dest in $destinations) {
 }
 
 ### Memory Files ###
-Get-MemoryFiles 2>$null
+Get-MemoryDump    #winpmem image
+Get-MemoryFiles   #hibernation, page & dump files
 Get-PrefetchCopy 2>$null
 
 ### Registry Files ###
