@@ -25,9 +25,10 @@ Data Gathering:
     [x] OS Information
         - Name, Version, Build
     [x] Installed Hotfixes
-[-] Memory Dump
+[x] Memory Dump
+    [x] Memory Image
     [x] Prefetch files
-    [ ] Pagefile
+    [x] Pagefile
 [X] Scheduled Tasks
 [X] System Services
 [X] Logged On User
@@ -395,7 +396,7 @@ forEach ($dest in $destinations) {
 }
 
 ### Memory Files ###
-Get-MemoryDump    #winpmem image
+#Get-MemoryDump    #winpmem image
 Get-MemoryFiles   #hibernation, page & dump files
 Get-PrefetchCopy 2>$null
 

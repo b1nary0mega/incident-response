@@ -51,6 +51,6 @@ $IngestList = Get-ChildItem -recurse ("../Incoming/" + $IncomingFolder[$folderIn
 #inform the user of the found files, by type
 $FileExt = "txt","evtx","pf","aff4"
 foreach ($ext in $FileExt) {
-  Write-host "`nThe following " $ext " files were found:" -foregroundcolor green
+  Write-host "`nThe following __" $ext "__ files were found:" -foregroundcolor green
   foreach ($item in $IngestList | where {$_.extension -eq ("." + $ext)}) {Write-host $item.Fullname}
 }
