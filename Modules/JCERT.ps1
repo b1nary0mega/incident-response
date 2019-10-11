@@ -37,70 +37,63 @@ Data Gathering:
 function Get-AutorunsQuery {
     Write-host "...pulling autoruns..." -foregroundcolor green 
     .\bin\autorunsc.exe -accepteula -a * -c >($dumpFileName + "\" + $env:ComputerName + "-autoruns.csv")
-    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-autoruns.csv")
 }
 
 function Get-ComputerInfo {
 # SOURCE: Jason Fossen @ http://www.sans.org/sec505
   Write-Output (.\Modules\Show-ComputerInfo.ps1) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ComputerInfo.txt")
   Write-host "...pulling computer info..." -foregroundcolor green 
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-ComputerInfo.txt")
 }
 
 function Get-Network_clientDNSCache {
   Write-Output (Get-DnsClientCache) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-DNSCache.txt")
   Write-host "...pulling dns cache info..." -foregroundcolor green
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-DNSCache.txt")
 }
 
 function Get-Network_clientIPConfig {
   Write-Output (Get-NetIPConfiguration) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-IPConfig.txt")
   Write-host "...pulling ip configuration..." -foregroundcolor green
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-IPConfig.txt")
 }
 
 function Get-Network_clientConnections {
   #Get All TCP Connections
   Write-Output (Get-NetTCPConnection) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-TCPConnections.txt")
   Write-host "...pulling tcp connections..." -foregroundcolor green
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-TCPConnections.txt")
 
   #Now get all established/listening connections with NetStat
   Write-Output (netstat -naob) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-NetStat.txt")
   Write-host "...pulling netstat info..." -foregroundcolor green
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-NetStat.txt")
 }
 
 function Get-Network_clientARPTable {
   Write-Output (arp -a) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ARPTable.txt")
   Write-host "...pulling arp table..." -foregroundcolor green
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-ARPTable.txt")
 }
 
 function Get-HostsCopy {
     Write-host "...pulling hosts file..." -foregroundcolor green 
     Copy-Item -path ($env:WinDir + "\System32\drivers\etc\hosts") -destination ($dumpFileName + "\" + $env:ComputerName + "-Hosts.txt")
-    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-Hosts.txt")
+
 }
 
 function Get-FileHasher {
     Write-host "...hashing all the things..." -foregroundcolor green 
-    ForEach ($file in $fileNames) {
-        get-filehash ($file) | format-list | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-Hashes.txt")
-    } 
+
+    $Filelist = Get-ChildItem -recurse $dumpFileName
+    ForEach ($file in $Filelist) {
+        get-filehash ($file.Fullname) | format-list | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-Hashes.txt")
+    }
+
 }
 
 function Get-FirewallData {
   Write-host "...pulling firewall configuration..." -foregroundcolor green 
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-FirewallConfig.txt")
   netsh advfirewall show allprofiles | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-FirewallConfig.txt")
   
   Write-host "...pulling firewall rules..." -foregroundcolor green
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-FirewallRules.txt")
   netsh advfirewall firewall show rule name=all type=dynamic | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-FirewallRules.txt")
 
   Write-host "...pulling firewall log..." -foregroundcolor green 
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-Firewall.log")
   copy-item -path ($env:WinDir + "\System32\LogFiles\Firewall\pfirewall.log") -destination ($dumpFileName + "\" + $env:ComputerName + "-Firewall.log")
 }
 
@@ -157,8 +150,6 @@ function Get-GroupQuery {
                 "`nSID: " + (ConvertTo-SID -BinarySID $_.ObjectSID[0])`
                 + "`n") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-Groups.txt")
           }
-          #add the filename to collection
-          $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-Groups.txt")
         } Else {
           Throw  "No groups found!"
         }
@@ -176,7 +167,6 @@ function Get-HiveCopy {
     forEach ($hive in $Hives){
         Write-host ("... ... " + $hive + "... ...") -foregroundcolor blue 
         reg save HKLM\SYSTEM ($dumpFileName + "\hives\" + $env:ComputerName + "-" + $hive)
-        $fileNames.Add($dumpFileName + "\hives\" + $env:ComputerName + "-" + $hive)
     }
 }
 
@@ -186,7 +176,6 @@ function Get-HiveByUsers {
 
     #create list of possible user registries
     reg query HKU | out-file -encoding ASCII -filepath ($dumpFileName + "\hives\" + $env:ComputerName + "-HKU-list.txt")
-    $fileNames.Add($dumpFileName + "\hives\" + $env:ComputerName + "-HKU-list.txt")
     
     #clean up list
     (Get-Content ($dumpFileName + "\hives\" + $env:ComputerName + "-HKU-list.txt")) -replace "HKEY_USERS\\", "" | out-file -encoding ASCII -filepath ($dumpFileName + "\hives\" + $env:ComputerName + "-HKU-list.txt")
@@ -195,20 +184,17 @@ function Get-HiveByUsers {
     $RegistryUsers = Get-Content ($dumpFileName + "\hives\" + $env:ComputerName + "-HKU-list.txt")
     forEach ($RegistryUser in $RegistryUsers) {
       reg save ("HKU\" + $RegistryUser) ($dumpFileName + "\hives\" + $env:ComputerName + "-" + $RegistryUser + "-NTHive")
-      $fileNames.Add($dumpFileName + "\hives\" + $env:ComputerName + "-" + $RegistryUser + "-NTHive")
     }
 }
 
 function Get-ComputerShares {
     Write-host "...pulling computer shares..." -foregroundcolor green 
     Get-WMIObject -class Win32_Share | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-ComputerShares.txt")
-    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-ComputerShares.txt")
 }
 
 function Get-ComputerDrives {
     Write-host "...pulling computer drives..." -foregroundcolor green 
     Get-WMIObject -class Win32_LogicalDisk | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-ComputerDrives.txt")
-    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-ComputerDrives.txt")
 }
 
 function Get-GPOPolicyReports {
@@ -238,7 +224,6 @@ function Get-InstalledProgramDetails {
     Write-Output "================================================================================" | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
     Get-ItemProperty "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | Select-Object DisplayName, DisplayVersion, Publisher, InstallLocation, InstallDate | out-file -append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
     
-    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-InstalledPrograms.txt")
 }
 
 function Get-LogCopy {
@@ -250,7 +235,6 @@ function Get-LogCopy {
     forEach ($log in $Logs.keys) {
         Write-host ("... ... " + $log + "... ...") -foregroundcolor blue 
         wevtutil epl $Logs[$log] ($dumpFileName + "\logs\" + $env:ComputerName + "-" + $log + ".evtx")
-        $fileNames.Add($dumpFileName + "\logs\" + $env:ComputerName + "-" + $log + ".evtx") 
     }
 }
 
@@ -297,7 +281,6 @@ function Get-MemoryDump {
   try {
     Write-host "...imaging Memory (winpmem)..." -foregroundcolor green 
     .\bin\winpmem.exe -o ($dumpFileName + "\memory\" + $env:ComputerName + "-winpmem_image.aff4") -dd
-    $fileNames.Add($dumpFileName + "\memory\" + $env:ComputerName + "-winpmem_image.aff4")
   }
   catch {
     Write-Output ("`t-error imaging Memory (winpmem") | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-ERROR_LOG.txt")
@@ -307,7 +290,6 @@ function Get-MemoryDump {
 function Get-Processes_PSTree {
 # SOURCE: Adam Roben @ https://gist.github.com/aroben/5542538
     Write-host "...pulling process tree..." -foregroundcolor green
-    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-ProcessTree.txt")
     if(1) {
         $ProcessesById = @{}
 
@@ -364,7 +346,6 @@ function Get-Processes_PSTree {
 
 Function Get-Processes_CPUMemUse {
   Write-host "...pulling process cpu and memory usage..." -foregroundcolor green
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-CPUMemUse.txt")
   Write-Output (get-process|select Name, Description, ID, @{Label="Memory Usage(KB)";Expression={($_.WS / 1KB)}}, @{Label="CPU Time(s)";Expression={($_.CPU)}}) | `
   out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-CPUMemUse.txt")
 }
@@ -375,14 +356,12 @@ function Get-TaskLists {
   forEach ($switch in $TasklistSwitches.keys) {
     Write-host ("... ... " + $switch + "... ...") -foregroundcolor blue
     Write-Output (tasklist ("/" + $TasklistSwitches[$switch])) | out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName + "-Tasklist-" + $switch +".txt")
-    $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-Tasklist-" + $switch +".txt")
   }
 }
 
 function Get-ScheduledTasks {
   Write-host "...pulling scheduled tasks..." -foregroundcolor green 
   schtasks /query /fo list /v | out-file ($dumpFileName + "\" + $env:ComputerName + "-ScheduledTasks.txt")
-  $fileNames.Add($dumpFileName + "\" + $env:ComputerName + "-ScheduledTasks.txt")
 }
 
 function Get-SystemServices {
@@ -392,7 +371,6 @@ function Get-SystemServices {
       Write-host ("... ... " + $status + " ... ...") -foregroundcolor blue 
       Write-Output (Get-Service | Where {$_.Status -eq $status} | Select-Object *) | `
         out-file -Append -encoding ASCII -filepath ($dumpFileName + "\" + $env:ComputerName +  "-SystemServices.txt")
-      $fileNames.Add($dumpFileName + "\" + $env:ComputerName +  "-SystemServices.txt")
     }
 }
 
