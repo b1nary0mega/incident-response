@@ -396,7 +396,7 @@ forEach ($dest in $destinations) {
 }
 
 ### Memory Files ###
-#Get-MemoryDump    #winpmem image
+Get-MemoryDump    #winpmem image
 Get-MemoryFiles   #hibernation, page & dump files
 Get-PrefetchCopy 2>$null
 
