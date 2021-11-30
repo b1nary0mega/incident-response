@@ -163,7 +163,7 @@ function Get-GroupQuery {
 
 function Get-HiveCopy {
     # !!! will FAIL without elevated privs !!! #
-    $Hives = "SYSTEM","SOFTWARE","SAM"
+    $Hives = "SYSTEM","SOFTWARE","SAM","SECURITY"
     Write-host "...pulling registry hive(s)..." -foregroundcolor green 
     forEach ($hive in $Hives){
         Write-host ("... ... " + $hive + "... ...") -foregroundcolor blue 
